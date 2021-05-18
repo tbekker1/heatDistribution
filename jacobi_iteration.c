@@ -1,3 +1,19 @@
+/*
+
+jacobi_iteration.c - OpenMP parallel algorithm for solving the 2d heat distribution problem using the Jacobi-Iteration method.
+
+Author: Thomas Bekkerman
+
+Modified from Dr. Simon's heated_plate.c
+
+To compile: "gcc -fopenmp jacobi_iteration.c -o jacobi_iteration"
+
+To run, pass in the accuracy criteria as well as the output file:
+"./jacobi_iteration 0.001 output_0.001"
+
+ */
+
+
 # include <stdlib.h>
 # include <stdio.h>
 # include <math.h>
@@ -199,7 +215,8 @@ int main ( int argc, char *argv[] )
   initial value for the interior.
 */
   mean = 0.0;
-  
+
+  //mean is a critical section, but we can reduce the sum of every loop to mean  
 #pragma omp parallel for reduction (+:mean) 
   for ( i = 1; i < M - 1; i++ )
   {
@@ -286,6 +303,7 @@ int main ( int argc, char *argv[] )
       {
         w[i][j] = ( u[i-1][j] + u[i+1][j] + u[i][j-1] + u[i][j+1] ) / 4.0;
 
+	//diff is a critical variable, so a critical section must be placed to get the value.
 #pragma omp critical
 	{
 	  

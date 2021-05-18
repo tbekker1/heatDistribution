@@ -1,3 +1,20 @@
+/*
+
+gauss_seidel.c - OpenMP parallel algorithm for solving the 2d heat distribution problem using the Gauss-Seidel method.
+
+Author: Thomas Bekkerman
+
+Modified from Dr. Simon's heated_plate.c
+
+To compile: "gcc -fopenmp gauss_seidel.c -o gauss_seidel"
+
+To run, pass in the accuracy criteria as well as the output file:
+"./gauss_seidel 0.001 output_0.001"
+
+ */
+
+
+
 # include <stdlib.h>
 # include <stdio.h>
 # include <math.h>
@@ -257,28 +274,12 @@ int main ( int argc, char *argv[] )
   while ( epsilon <= diff )
   {
 /*
-  Save the old solution in U.
-*/
-
-    /*
-#pragma omp parallel shared(u, w) private (i, j)
-    {
-#pragma omp for
-    for ( i = 0; i < M; i++ ) 
-    {
-      for ( j = 0; j < N; j++ )
-      {
-        u[i][j] = w[i][j];
-      }
-    }
-    
-    }
-    /*
-/*
   Determine the new estimate of the solution at the interior points.
   The new solution W is the average of north, south, east and west neighbors.
 */
     diff = 0.0;
+
+    //For the red nodes
 #pragma omp parallel shared(w, diff) private (i, j)
     {
 #pragma omp for
@@ -286,10 +287,12 @@ int main ( int argc, char *argv[] )
     {
       for ( j = 1; j < N - 1; j++ )
       {
-	//red squares
+	//calculate the red squares (if even number)
 	if ((i + j) % 2 == 0){
+	  //save the old value of w
 	  double tempOldW = w[i][j];
 	  w[i][j] = ( w[i-1][j] + w[i+1][j] + w[i][j-1] + w[i][j+1] ) / 4.0;
+	  //get the difference
 	  double thisDiff = fabs(w[i][j] - tempOldW);
 	  
 #pragma omp critical
@@ -309,7 +312,9 @@ int main ( int argc, char *argv[] )
     }
     #pragma omp barrier
     }
-    
+
+
+    //For the black nodes
 #pragma omp parallel shared(w, diff) private (i, j)
     {
 #pragma omp for
@@ -317,7 +322,7 @@ int main ( int argc, char *argv[] )
     {
       for ( j = 1; j < N - 1; j++ )
       {
-	//black squares
+	//calculate the black squares (if odd number)
 	if ((i + j) % 2 == 1){
 	  double tempOldW = w[i][j];
 	  w[i][j] = ( w[i-1][j] + w[i+1][j] + w[i][j-1] + w[i][j+1] ) / 4.0;
